@@ -1,0 +1,251 @@
+
+from Configration import *
+
+
+class BasicTools():
+    @staticmethod
+    def _plusTerms(in_vars):
+        """
+        >>> BasicTools._plusTerms(['x', 'y', 'z'])
+        'x + y + z'
+        >>> BasicTools._plusTerms(['x', 'y'])
+        'x + y'
+        >>> BasicTools._plusTerms(['x', 'y', 'z', 'a', 'b'])
+        'x + y + z + a + b'
+        >>>
+        """
+        t = ''
+        for v in in_vars:
+            t = t + v + ' + '
+        return t[0:-3]
+
+    @staticmethod
+    def minusTerms(in_vars):
+        """
+        >>> BasicTools.minusTerms(['x', 'y', 'z'])
+        'x - y - z'
+        >>> BasicTools.minusTerms(['x', 'y'])
+        'x - y'
+        >>> BasicTools.minusTerms(['x', 'y', 'z', 'a', 'b'])
+        'x - y - z - a - b'
+        >>>
+        """
+        t = ''
+        for v in in_vars:
+            t = t + v + ' - '
+        return t[0:-3]
+
+    @staticmethod
+    def AND(V_in, V_out):
+        # (0, 0) -> 0, (0, 1) -> 0, (1, 0) -> 0, (1, 1) -> 1
+        m = len(V_in)
+        constr = []
+        constr = constr + [V_out + ' - ' + BasicTools.minusTerms(V_in) + ' >= ' + str(1 - m)]
+        constr = constr + [BasicTools._plusTerms(V_in) + ' - ' + str(m) + ' ' + V_out + ' >= 0']
+        return constr
+
+    @staticmethod
+    def OR_(V_in, V_out):
+        # (0, 0) -> 0, (0, 1) -> 1, (1, 0) -> 1, (1, 1) -> 1
+        m = len(V_in)
+        constr = []
+        constr = constr + [str(m) + ' ' + V_out + ' - ' + BasicTools.minusTerms(V_in) + ' >= 0']
+        constr = constr + [V_out + ' - ' + BasicTools.minusTerms(V_in) + ' <= 0']
+        return constr
+
+    @staticmethod
+    def N_AND(V_in, V_out):
+        # (0, 0) -> 1, (0, 1) -> 1, (1, 0) -> 1, (1, 1) -> 0
+        m = len(V_in)
+        constr = []
+        constr = constr + [V_out + ' + ' + BasicTools._plusTerms(V_in) + ' <= ' + str(m)]
+        constr = constr + [BasicTools._plusTerms(V_in) + ' + ' + str(m) + ' ' + V_out + ' >= ' + str(m)]
+        return constr
+
+    @staticmethod
+    def N_OR_(V_in, V_out):
+        # (0, 0) -> 1, (0, 1) -> 0, (1, 0) -> 0, (1, 1) -> 0
+        m = len(V_in)
+        constr = []
+        if m != 0:
+            constr = constr + [V_out + ' + ' + BasicTools._plusTerms(V_in) + ' >= 1']
+            for j in range(m):
+                constr = constr + [V_in[j] + ' + ' + V_out + ' <= 1']
+        elif m == 0:
+            constr = constr + [V_out + ' >= 1']
+        return constr
+
+    @staticmethod
+    def getVariables_From_Constraints(C):
+        V = set([])
+        for s in C:
+            # print(s)
+            temp = s.strip()
+            temp = temp.replace(' + ', '   ')
+            temp = temp.replace(' - ', '   ')
+            temp = temp.replace(' >= ', '   ')
+            temp = temp.replace(' <= ', '   ')
+            temp = temp.replace(' = ', '   ')
+            temp = temp.replace(' -> ', '   ')
+            temp = temp.replace(' AND ', '     ')
+            temp = temp.replace(' OR ', '    ')
+            temp = temp.replace(' MAX ', '     ')
+            temp = temp.replace(' MIN ', '     ')
+            temp = temp.replace(' , ', '   ')
+            temp = temp.replace(' ( ', '   ')
+            temp = temp.replace(' ) ', '   ')
+            temp = temp.split()
+            for v in temp:
+                if not v.lstrip('-').isdecimal():
+                    V.add(v)
+        return V
+
+
+class MITMPreConstraints:
+    @staticmethod
+    def Determine_Allone(V_in, V_out):
+        m = len(V_in)
+        constr = []
+        constr = constr + [V_out + ' - ' + BasicTools.minusTerms(V_in) + ' >= ' + str(1 - m)]
+        constr = constr + [BasicTools._plusTerms(V_in) + ' - ' + str(m) + ' ' + V_out + ' >= 0']
+        return constr
+
+    @staticmethod
+    def Determine_ExistZero(V_in, V_out):
+        m = len(V_in)
+        constr = []
+        constr = constr + [V_out + ' + ' + BasicTools._plusTerms(V_in) + ' <= ' + str(m)]
+        constr = constr + [BasicTools._plusTerms(V_in) + ' + ' + str(m) + ' ' + V_out + ' >= ' + str(m)]
+        return constr
+
+    @staticmethod
+    def Determine_Allzero(V_in, V_out):
+        m = len(V_in)
+        constr = []
+        constr = constr + [V_out + ' + ' + BasicTools._plusTerms(V_in) + ' >= 1']
+        for j in range(m):
+            constr = constr + [V_in[j] + ' + ' + V_out + ' <= 1']
+        return constr
+
+    @staticmethod
+    def Determine_ExistOne(V_in, V_out):
+        m = len(V_in)
+        constr = []
+        constr = constr + [str(m) + ' ' + V_out + ' - ' + BasicTools.minusTerms(V_in) + ' >= 0']
+        constr = constr + [V_out + ' - ' + BasicTools.minusTerms(V_in) + ' <= 0']
+        return constr
+
+    @staticmethod
+    def equalConstraints(x, y):
+        assert len(x) == len(y)
+        cons = []
+        for i in range(len(x)):
+            cons = cons + [x[i] + ' - ' + y[i] + ' = 0']
+        return cons
+
+    @staticmethod
+    def Separate_without_Guess_i(
+            In_1_i,
+            In_2_i,
+            SupP_Blue_1_i,
+            SupP_Blue_2_i,
+            SupP_Red__1_i,
+            SupP_Red__2_i,
+            In_isWhite_i
+    ):
+        cons = []
+        cons = cons + BasicTools.N_OR_([In_1_i, In_2_i], In_isWhite_i)
+        cons = cons + [SupP_Blue_1_i + ' + ' + In_isWhite_i + ' = 1']
+        cons = cons + [SupP_Blue_2_i + ' - ' + In_2_i + ' = 0']
+        cons = cons + [SupP_Red__2_i + ' - ' + SupP_Blue_1_i + ' = 0']
+        cons = cons + [SupP_Red__1_i + ' - ' + In_1_i + ' = 0']
+        return cons
+
+    @staticmethod
+    def genSubConstraints_MC_SupP__Blue(
+            I_MC_SupP_Blue_1_coli,
+            I_MC_SupP_Blue_2_coli,
+            I_MC_SupP_Blue_ColExistWhite_coli,
+            I_MC_SupP_Blue_ColAllGray_coli,
+            O_MC_SupP_Blue_1_coli,
+            O_MC_SupP_Blue_2_coli,
+            G_SupP_Blue_SumGray_coli,
+            G_CD_MC_Blue_coli
+    ):
+        cons = []
+        cons = cons + BasicTools.N_AND(I_MC_SupP_Blue_1_coli, I_MC_SupP_Blue_ColExistWhite_coli)
+        cons = cons + BasicTools.AND(I_MC_SupP_Blue_2_coli, I_MC_SupP_Blue_ColAllGray_coli)
+        cons = cons + [BasicTools._plusTerms(O_MC_SupP_Blue_1_coli) + ' + ' + str(RowN) + ' ' + I_MC_SupP_Blue_ColExistWhite_coli + ' = ' + str(RowN)]
+        cons = cons + [BasicTools._plusTerms(O_MC_SupP_Blue_2_coli) + ' + ' + str(RowN) + ' ' + I_MC_SupP_Blue_ColExistWhite_coli + ' <= ' + str(RowN)]
+        cons = cons + [G_SupP_Blue_SumGray_coli + ' - ' + BasicTools.minusTerms(I_MC_SupP_Blue_2_coli) + ' - ' + BasicTools.minusTerms(O_MC_SupP_Blue_2_coli) + ' = 0']
+        cons = cons + [G_SupP_Blue_SumGray_coli + ' - ' + str(BranchN) + ' ' + I_MC_SupP_Blue_ColAllGray_coli + ' <= ' + str(SumIOMC - BranchN)]
+        cons = cons + [G_SupP_Blue_SumGray_coli + ' - ' + str(SumIOMC) + ' ' + I_MC_SupP_Blue_ColAllGray_coli + ' >= 0']
+        cons = cons + [G_CD_MC_Blue_coli + ' - ' + BasicTools.minusTerms(O_MC_SupP_Blue_2_coli) + ' + ' + str(RowN) + ' ' + I_MC_SupP_Blue_ColAllGray_coli + ' = 0']
+        return cons
+
+    @staticmethod
+    def genSubConstraints_MC_SupP__Red(
+            I_MC_SupP_Red__1_coli,
+            I_MC_SupP_Red__2_coli,
+            I_MC_SupP_Red__ColExistWhite_coli,
+            I_MC_SupP_Red__ColAllGray_coli,
+            O_MC_SupP_Red__1_coli,
+            O_MC_SupP_Red__2_coli,
+            G_SupP_Red__SumGray_coli,
+            G_CD_MC_Red__coli
+    ):
+        cons = []
+        cons = cons + BasicTools.N_AND(I_MC_SupP_Red__2_coli, I_MC_SupP_Red__ColExistWhite_coli)
+        cons = cons + BasicTools.AND(I_MC_SupP_Red__1_coli, I_MC_SupP_Red__ColAllGray_coli)
+        cons = cons + [BasicTools._plusTerms(O_MC_SupP_Red__2_coli) + ' + ' + str(RowN) + ' ' + I_MC_SupP_Red__ColExistWhite_coli + ' = ' + str(RowN)]
+        cons = cons + [BasicTools._plusTerms(O_MC_SupP_Red__1_coli) + ' + ' + str(RowN) + ' ' + I_MC_SupP_Red__ColExistWhite_coli + ' <= ' + str(RowN)]
+        cons = cons + [G_SupP_Red__SumGray_coli + ' - ' + BasicTools.minusTerms(I_MC_SupP_Red__1_coli) + ' - ' + BasicTools.minusTerms(O_MC_SupP_Red__1_coli) + ' = 0']
+        cons = cons + [G_SupP_Red__SumGray_coli + ' - ' + str(BranchN) + ' ' + I_MC_SupP_Red__ColAllGray_coli + ' <= ' + str(SumIOMC - BranchN)]
+        cons = cons + [G_SupP_Red__SumGray_coli + ' - ' + str(SumIOMC) + ' ' + I_MC_SupP_Red__ColAllGray_coli + ' >= 0']
+        cons = cons + [G_CD_MC_Red__coli + ' - ' + BasicTools.minusTerms(O_MC_SupP_Red__1_coli) + ' + ' + str(RowN) + ' ' + I_MC_SupP_Red__ColAllGray_coli + ' = 0']
+        return cons
+
+    @staticmethod
+    def genConstrains_of_Xor_i(
+            IP1_SupP_Blue_1_i,
+            IP1_SupP_Blue_2_i,
+            IP1_SupP_Red_1_i,
+            IP1_SupP_Red_2_i,
+            IP2_SupP_Blue_1_i,
+            IP2_SupP_Blue_2_i,
+            IP2_SupP_Red_1_i,
+            IP2_SupP_Red_2_i,
+            OP_SupP_Blue_1_i,
+            OP_SupP_Blue_2_i,
+            OP_SupP_Red_1_i,
+            OP_SupP_Red_2_i,
+            CD_XOR_Blue_i,
+            CD_XOR_Red_i,
+            OP_isWhite_i,
+            OP_SupP_Blue_AND_1_i,
+            OP_SupP_Blue_AND_2_i,
+            OP_SupP_Blue_OR__1_i,
+            OP_SupP_Blue_OR__2_i,
+            OP_SupP_Red__AND_1_i,
+            OP_SupP_Red__AND_2_i,
+            OP_SupP_Red__OR__1_i,
+            OP_SupP_Red__OR__2_i
+    ):
+        cons = []
+        cons = cons + BasicTools.N_AND([IP1_SupP_Blue_1_i, IP2_SupP_Blue_1_i], OP_isWhite_i)
+
+        cons = cons + BasicTools.AND([IP1_SupP_Blue_2_i, IP2_SupP_Blue_2_i], OP_SupP_Blue_AND_2_i)
+        cons = cons + BasicTools.OR_([IP1_SupP_Blue_2_i, IP2_SupP_Blue_2_i], OP_SupP_Blue_OR__2_i)
+        cons = cons + [CD_XOR_Blue_i + ' + ' + OP_SupP_Blue_OR__2_i + ' <= 1']
+        cons = cons + [CD_XOR_Blue_i + ' + ' + OP_isWhite_i + ' <= 1']
+        cons = cons + [OP_SupP_Blue_1_i + ' + ' + OP_isWhite_i + ' = 1']
+        cons = cons + [OP_SupP_Blue_2_i + ' - ' + OP_SupP_Blue_AND_2_i + ' - ' + CD_XOR_Blue_i + ' = 0']
+
+        cons = cons + BasicTools.AND([IP1_SupP_Red_1_i, IP2_SupP_Red_1_i], OP_SupP_Red__AND_1_i)
+        cons = cons + BasicTools.OR_([IP1_SupP_Red_1_i, IP2_SupP_Red_1_i], OP_SupP_Red__OR__1_i)
+        cons = cons + [CD_XOR_Red_i + ' + ' + OP_SupP_Red__OR__1_i + ' <= 1']
+        cons = cons + [CD_XOR_Red_i + ' + ' + OP_isWhite_i + ' <= 1']
+        cons = cons + [OP_SupP_Red_2_i + ' + ' + OP_isWhite_i + ' = 1']
+        cons = cons + [OP_SupP_Red_1_i + ' - ' + OP_SupP_Red__AND_1_i + ' - ' + CD_XOR_Red_i + ' = 0']
+        return cons
+

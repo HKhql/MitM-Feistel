@@ -1,0 +1,4 @@
+- `Simpira_b2_odd.py`: MILP program searching for MitM preimage attacks on Simpira-b2 with odd number of rounds.
+- `Simpira_b2_even.py`: MILP program searching for MitM preimage attacks on Simpira-b2 with even number of rounds.
+- `Configration.py`: specification of AES-like primitives.
+- `utils.py`: tools used to build MILP model of MitM preimage attack.
