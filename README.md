@@ -8,4 +8,4 @@ Contents of the files:
 - Simpira-b4: the code to generate MILP models searching for MitM preimage attack on Simpira-b4.
 - Simpira-b6: the code to generate MILP models searching for MitM preimage attack on Simpira-b6.
 - Feistel-SP: the code to generate MILP models searching for MitM preimage attack on Feistel-SP.
-- Simpira-b2-experiment: the code to verify the correctness of an example MitM characteristics of Simpira-b2.# MitM-Feistel
+- Simpira-b2-experiment: the code to verify the correctness of an example MitM characteristics of Simpira-b2.
