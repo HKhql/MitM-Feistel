@@ -911,10 +911,8 @@ if __name__ == '__main__':
         os.makedirs(root)
     with open(f"./Model/Result_{TR}.txt", "w") as rd:
         rd.write('TR, ini_r, mat_r: d1, d2, m' + '\n')
-        # for mat_r in [0, 1, 2, TR - 1, TR - 2, TR - 3]:
-        #     for ini_r in range(TR):
-        for mat_r in [1]:
-            for ini_r in range(7, 8):
+        for mat_r in [0, 1, 2, TR - 1, TR - 2, TR - 3]:
+            for ini_r in range(TR):
                 filename = f'./Model/TR{TR}/inir{ini_r}_matr{mat_r}'
                 A = Constraints_generator(TR, ini_r, mat_r)
                 A.genModel(filename)

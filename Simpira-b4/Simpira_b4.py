@@ -831,7 +831,7 @@ if __name__ == '__main__':
                     A = Constraints_generator(TR, ini_r, mat_r)
                     A.genModel(filename)
                     Model = read(filename + '.lp')
-                    Model.setParam('TimeLimit', 120 * 60)
+                    # Model.setParam('TimeLimit', 180 * 60)
                     Model.optimize()
 
                     if Model.SolCount == 0:
